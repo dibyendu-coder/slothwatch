@@ -21,7 +21,13 @@ export function getDatabase(customPath?: string): Database.Database {
   db.pragma("foreign_keys = ON");
 
   // Read and apply schema
-  const schemaPath = path.resolve(__dirname, "schema.sql");
+  let schemaPath = path.resolve(__dirname, "schema.sql");
+  if (!fs.existsSync(schemaPath)) {
+    schemaPath = path.resolve(__dirname, "..", "..", "src", "db", "schema.sql");
+  }
+  if (!fs.existsSync(schemaPath)) {
+    schemaPath = path.resolve(process.cwd(), "src", "db", "schema.sql");
+  }
   const schemaSql = fs.readFileSync(schemaPath, "utf-8");
   db.exec(schemaSql);
 

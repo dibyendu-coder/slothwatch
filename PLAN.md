@@ -27,11 +27,11 @@ Mark each box when done. Do one phase at a time and stop for review at the end o
 - [x] End-to-end on a page I control
 
 ## Phase 3 — Lazy features and numbers
-- [ ] Recipe record + replay (verify Stagehand support first, fallback own store)
-- [ ] `run-all`, minimum interval guard
-- [ ] Run metrics recorded
-- [ ] `stats` command
-- [ ] `history`
+- [x] Recipe record + replay (verify Stagehand support first, fallback own store)
+- [x] `run-all`, minimum interval guard
+- [x] Run metrics recorded
+- [x] `stats` command
+- [x] `history`
 
 ## Phase 4 — Benchmark and polish
 - [ ] Same watch list judged by 2-3 open models, table of success, time, tokens

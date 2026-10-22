@@ -56,3 +56,29 @@ Running log of surprises, failures, design pivots, and real measured numbers for
 - **Surprises & Gotchas**:
   - Cold model loading for a 4.6GB quantized model on local CPU/disk takes ~60s on the first inference; increased default client timeout to 120s to prevent premature client-side aborts during cold starts.
   - Zod v4 syntax differences: `required_error` object option from Zod v3 is deprecated in favor of standard validation types in Zod v4.
+
+## Phase 3 Notes & Measured Numbers (Lazy Payoff & Scheduling)
+- **Stagehand Caching vs. Custom Recipe Store**:
+  - Stagehand v4 provides managed server-side LLM action caching on Browserbase, but has no native multi-step recipe recording or replay API.
+  - Built a custom recipe store in SQLite (`watches.recipe_json`), executing saved CSS/XPath selectors for 0-model-call replay and falling back to Stagehand `act()` re-discovery once if a selector fails.
+- **Browserbase Usage & Quota**:
+  - Checked Browserbase dashboard limits via API (`/v1/projects/{projectId}`): concurrency 3, active sessions 0.
+  - Executed 10 total browser sessions across 3 live targets.
+  - Total Browserbase session time consumed: ~0.5 session minutes (well within free tier).
+- **Real Multi-Watch Test Runs**:
+  - Configured 3 live watches:
+    1. Watch #3 (`SlothWatch Repo` — controlled page): `https://github.com/dibyendu-coder/slothwatch`
+    2. Watch #4 (`Book Price Watch` — price page with recipe step): `https://books.toscrape.com/...` with `--step "click #write_review"`
+    3. Watch #6 (`Python Announcements` — public news): `https://www.python.org/blogs/`
+  - Total Runs Executed: 10 runs
+  - Content Hash Lazy Hit Rate: 50.0% (5 out of 10 runs avoided model calls entirely by hash check)
+  - Pure Deterministic Recipe Replays: 2 runs replayed deterministically with 0 model calls
+  - Recipe Fallback: 1 run tested with intentionally broken selector (`#intentionally-broken-selector-404`), successfully fell back to Stagehand re-discovery, re-resolved the element to `xpath=/html[1]/body[1]/...`, and flagged `[RECIPE FALLBACK]` in history.
+  - Average Browser Session: 15.53 seconds
+  - Average Model Latency: 23.02 seconds (when changes detected)
+  - Total Local Tokens: 1,646 tokens
+  - Estimated Manual Minutes Saved: 20 minutes (at 2 min/check default assumption) or 30 minutes (at 3 min/check assumption)
+- **Surprises & Gotchas**:
+  - **SQLite UTC vs JavaScript Date**: SQLite `datetime('now')` produces `YYYY-MM-DD HH:MM:SS` in UTC. In JavaScript on Windows in non-UTC timezones (e.g. IST +05:30), `new Date(str)` without an explicit `"Z"` interprets the timestamp as local time, shifting it 5.5 hours into the past and causing interval calculations to treat recent runs as hours old. Solved via `parseSqliteUtc` helper.
+  - **TypeScript Build Asset Copying**: TypeScript compiler (`tsc`) does not copy `.sql` files into `dist/`. Added dynamic directory lookup in `src/db/client.ts` to locate `schema.sql` whether running from source via `tsx` or compiled via `node dist/bin/slothwatch.js`.
+  - **Fault Isolation in run-all**: When Watch #5 initially encountered an invalid CSS selector, the runner safely isolated the error, updated SQLite with `status: error`, and proceeded to subsequent watches without aborting the suite.
