@@ -1,0 +1,24 @@
+# Environment & secrets
+.env
+.env*.local
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# SQLite databases & logs
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.log
+
+# Test & coverage
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
