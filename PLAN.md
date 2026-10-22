@@ -19,12 +19,12 @@ Mark each box when done. Do one phase at a time and stop for review at the end o
 - [x] Tests for hashing and normalization
 
 ## Phase 2 — Local judge + push
-- [ ] Ollama client (chat endpoint, JSON output, timeouts, token counts)
-- [ ] Compact diff builder
-- [ ] zod-validated judgment, retry once on invalid JSON, then fail safe
-- [ ] ntfy push on `matters: true`
-- [ ] Noise test: timestamp-only change does not push
-- [ ] End-to-end on a page I control
+- [x] Ollama client (chat endpoint, JSON output, timeouts, token counts)
+- [x] Compact diff builder
+- [x] zod-validated judgment, retry once on invalid JSON, then fail safe
+- [x] ntfy push on `matters: true`
+- [x] Noise test: timestamp-only change does not push
+- [x] End-to-end on a page I control
 
 ## Phase 3 — Lazy features and numbers
 - [ ] Recipe record + replay (verify Stagehand support first, fallback own store)

@@ -16,7 +16,7 @@ export interface Run {
   watch_id: number;
   started_at: string;
   duration_ms: number | null;
-  status: "success" | "unchanged" | "error";
+  status: "success" | "unchanged" | "error" | "judge_failed";
   changed: number; // 0 or 1
   model_called: number; // 0 or 1
   matters: number | null; // 0, 1, or null
@@ -159,5 +159,14 @@ export class WatchRepository {
 
     const stmt = this.db.prepare(`UPDATE runs SET ${setClause} WHERE id = ?`);
     stmt.run(...values, runId);
+  }
+
+  getRunsForWatch(watchId: number): Run[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM runs
+      WHERE watch_id = ?
+      ORDER BY id DESC
+    `);
+    return stmt.all(watchId) as Run[];
   }
 }

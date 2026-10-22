@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { handleAdd } from "./add.js";
 import { runDoctor } from "./doctor.js";
+import { handleHistory } from "./history.js";
 import { handleList } from "./list.js";
 import { handleRemove } from "./remove.js";
 import { handleRun } from "./run.js";
@@ -53,6 +54,13 @@ export function createProgram(): Command {
     .option("-l, --local", "Force using local Chrome browser instead of Browserbase cloud")
     .action(async (id, options) => {
       await handleRun(id, options);
+    });
+
+  program
+    .command("history <id>")
+    .description("Display run and judgment history for a watch")
+    .action((id) => {
+      handleHistory(id);
     });
 
   return program;

@@ -28,19 +28,31 @@ Running log of surprises, failures, design pivots, and real measured numbers for
   - Stagehand v4 requires calling both `stagehand.close()` and `browser.close()` for clean process and cloud session shutdown.
   - ntfy topic endpoints return 404 on HEAD requests when empty; the doctor command checks `${NTFY_SERVER}/v1/health` for server status.
 
-### Real Two-Run Measurement on `https://example.com`:
-- **Run 1 (Baseline Snapshot)**:
-  - Raw extracted text: 917 chars
-  - Normalized text: 911 chars
-  - Hash: `6a2f988e0a96e32fe616c9dd9a410af179b5bb482cfb8883063ec6b3608c7a61`
-  - Browser time: 1,678 ms
-  - Model calls: 0
-  - Status: `success` (Baseline established)
-- **Run 2 (Repeat Unchanged Run)**:
-  - Raw extracted text: 917 chars
-  - Normalized text: 911 chars
-  - Hash match: `6a2f988e0a96e32fe616c9dd9a410af179b5bb482cfb8883063ec6b3608c7a61`
-  - Browser time: 1,348 ms
-  - **Model calls avoided: 1 (100% avoided, 0 tokens used)**
-  - Model time: 0 ms
-  - Status: `unchanged` (Lazy Payoff verified)
+## Phase 2 Notes & Measured Numbers
+- **Model Tag Used**: `gemma4:e2b` via local Ollama HTTP chat endpoint (`http://localhost:11434/api/chat`).
+- **Inference Timing**:
+  - Cold model load (first time reading weights from disk into memory): ~60-65 seconds.
+  - Warm inference latency: 6,805 ms – 16,729 ms per judgment.
+  - Prompt tokens per judgment: ~300 – 435 tokens (compact diff keeps token usage low).
+  - Completion tokens per judgment: ~47 – 67 tokens.
+- **Compact Diff Performance**:
+  - Lines diffed: omitted unchanged lines to conserve context window for 2B model.
+  - Capped safely with truncation notification when diff exceeds max limits.
+- **Real End-to-End Test Results**:
+  1. **Check A (Meaningful Change)**:
+     - Diff: `- Status: Review in progress. Final results pending.` -> `+ Status: Congratulations! Your application has been ACCEPTED as a WINNER! Results announced.`
+     - Judgment: `matters: true`.
+     - Summary: *"Application status changed to accepted as a winner. Results announced on the portal."*
+     - Push Alert: Dispatched to phone via ntfy (`Tags: sloth,bell`, `Priority: high`, `Click: <url>`). Topic was kept secret and never logged.
+  2. **Check B (Noise-Only Change)**:
+     - Diff: `- Last updated: 2026-10-22 17:45:00 UTC`, `+ Last updated: 2026-10-22 18:00:00 UTC`, visitor counter change.
+     - Judgment: `matters: false`.
+     - Reason: *"The diff only shows changes to timestamps and visitor counts, which do not relate to application portal status updates."*
+     - Push Alert: Suppressed (0 push alerts sent).
+  3. **Check C (Unchanged Page)**:
+     - Hash matched previous snapshot: 0 model calls made, 0 tokens used, 0ms model time.
+  4. **Check D (Ollama Stopped / Unreachable)**:
+     - Pointed `OLLAMA_HOST` to invalid port: Caught cleanly without unhandled crash, recorded in database as `status: "judge_failed"`, preserved baseline snapshot for future runs, and displayed with full diagnostic error in `slothwatch history`.
+- **Surprises & Gotchas**:
+  - Cold model loading for a 4.6GB quantized model on local CPU/disk takes ~60s on the first inference; increased default client timeout to 120s to prevent premature client-side aborts during cold starts.
+  - Zod v4 syntax differences: `required_error` object option from Zod v3 is deprecated in favor of standard validation types in Zod v4.
