@@ -11,12 +11,12 @@ Mark each box when done. Do one phase at a time and stop for review at the end o
 - [x] NOTES.md started
 
 ## Phase 1 — Walking skeleton
-- [ ] SQLite schema + migrations
-- [ ] `add`, `list`, `remove`
-- [ ] Browserbase session via Stagehand, navigate, extract visible text
-- [ ] Normalize + hash + snapshot store
-- [ ] `run <id>` stores snapshot, second run reports unchanged with zero model calls
-- [ ] Tests for hashing and normalization
+- [x] SQLite schema + migrations
+- [x] `add`, `list`, `remove`
+- [x] Browserbase session via Stagehand, navigate, extract visible text
+- [x] Normalize + hash + snapshot store
+- [x] `run <id>` stores snapshot, second run reports unchanged with zero model calls
+- [x] Tests for hashing and normalization
 
 ## Phase 2 — Local judge + push
 - [ ] Ollama client (chat endpoint, JSON output, timeouts, token counts)
