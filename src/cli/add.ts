@@ -1,10 +1,11 @@
 import pc from "picocolors";
 import { WatchRepository } from "../db/repository.js";
 
-interface AddOptions {
+export interface AddOptions {
   care: string;
   name?: string;
   selector?: string;
+  step?: string[];
 }
 
 export function handleAdd(url: string, options: AddOptions): void {
@@ -29,12 +30,17 @@ export function handleAdd(url: string, options: AddOptions): void {
     return;
   }
 
+  const recipeSteps = options.step && options.step.length > 0
+    ? options.step.map((instruction) => ({ instruction }))
+    : undefined;
+
   const repo = new WatchRepository();
   const watch = repo.addWatch({
     url: url.trim(),
     care: options.care.trim(),
     name: options.name?.trim(),
     selector: options.selector?.trim(),
+    recipe_json: recipeSteps ? JSON.stringify(recipeSteps) : undefined,
   });
 
   console.log(pc.green(pc.bold("\n✓ Watch registered successfully!")));
@@ -44,6 +50,10 @@ export function handleAdd(url: string, options: AddOptions): void {
   console.log(`  ${pc.bold("Care:")}     ${watch.care}`);
   if (watch.selector) {
     console.log(`  ${pc.bold("Selector:")} ${watch.selector}`);
+  }
+  if (recipeSteps && recipeSteps.length > 0) {
+    console.log(`  ${pc.bold("Recipe:")}   ${recipeSteps.length} step(s) configured`);
+    recipeSteps.forEach((s, idx) => console.log(`     ${idx + 1}. ${s.instruction}`));
   }
   console.log(`\nRun ${pc.cyan(`slothwatch run ${watch.id}`)} to perform the initial snapshot.\n`);
 }

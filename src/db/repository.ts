@@ -16,7 +16,7 @@ export interface Run {
   watch_id: number;
   started_at: string;
   duration_ms: number | null;
-  status: "success" | "unchanged" | "error" | "judge_failed";
+  status: "running" | "success" | "unchanged" | "error" | "judge_failed";
   changed: number; // 0 or 1
   model_called: number; // 0 or 1
   matters: number | null; // 0, 1, or null
@@ -27,6 +27,8 @@ export interface Run {
   model_ms: number;
   prompt_tokens: number;
   completion_tokens: number;
+  replayed: number; // 0 or 1
+  recipe_fallback: number; // 0 or 1
 }
 
 export interface Snapshot {
@@ -77,6 +79,11 @@ export class WatchRepository {
     const stmt = this.db.prepare(`SELECT * FROM watches WHERE id = ?`);
     const row = stmt.get(id);
     return (row as Watch) || null;
+  }
+
+  updateWatchRecipe(id: number, recipeJson: string): void {
+    const stmt = this.db.prepare(`UPDATE watches SET recipe_json = ? WHERE id = ?`);
+    stmt.run(recipeJson, id);
   }
 
   listWatches(): WatchWithLastRun[] {

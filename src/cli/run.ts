@@ -7,49 +7,78 @@ import { sendPushNotification } from "../notify/ntfy.js";
 import { computeHash } from "../text/hash.js";
 import { normalizeText } from "../text/normalize.js";
 
-interface RunOptions {
+export interface RunOptions {
   local?: boolean;
+  silent?: boolean;
 }
 
-export async function handleRun(idStr: string, options: RunOptions = {}): Promise<void> {
-  const id = parseInt(idStr, 10);
-  if (isNaN(id) || id <= 0) {
-    console.error(pc.red(`Error: "${idStr}" is not a valid watch ID.`));
-    process.exitCode = 1;
-    return;
-  }
+export interface RunResult {
+  runId: number;
+  watchId: number;
+  status: "success" | "unchanged" | "error" | "judge_failed";
+  changed: boolean;
+  matters: boolean | null;
+  modelCalled: boolean;
+  replayed: boolean;
+  recipeFallback: boolean;
+  durationMs: number;
+  browserMs: number;
+  modelMs: number;
+  error?: string;
+  summary?: string;
+  reason?: string;
+}
 
+export async function executeWatchRun(watchId: number, options: RunOptions = {}): Promise<RunResult> {
   const repo = new WatchRepository();
-  const watch = repo.getWatchById(id);
+  const watch = repo.getWatchById(watchId);
   if (!watch) {
-    console.error(pc.red(`Error: Watch with ID #${id} not found.`));
-    process.exitCode = 1;
-    return;
+    throw new Error(`Watch with ID #${watchId} not found.`);
   }
 
-  console.log(pc.bold(`\n🦥 SlothWatch Running Watch #${watch.id} — "${watch.name || watch.url}"`));
-  console.log(`   ${pc.dim("Target URL:")} ${watch.url}`);
+  const log = (msg: string) => {
+    if (!options.silent) {
+      console.log(msg);
+    }
+  };
+
+  log(pc.bold(`\n🦥 SlothWatch Running Watch #${watch.id} — "${watch.name || watch.url}"`));
+  log(`   ${pc.dim("Target URL:")} ${watch.url}`);
   if (watch.selector) {
-    console.log(`   ${pc.dim("Selector:")}   ${watch.selector}`);
+    log(`   ${pc.dim("Selector:")}   ${watch.selector}`);
   }
-  console.log(`   ${pc.dim("Care intent:")} ${watch.care}`);
+  log(`   ${pc.dim("Care intent:")} ${watch.care}`);
 
   const run = repo.createRun(watch.id);
   const startTime = Date.now();
 
   try {
-    console.log(pc.cyan(`\n1. Fetching page via browser...`));
-    const { rawText, browserMs } = await extractPageText(watch.url, watch.selector, {
-      forceLocal: options.local,
-    });
+    log(pc.cyan(`\n1. Fetching page via browser...`));
+    const { rawText, browserMs, replayed, recipeFallback, updatedRecipe } = await extractPageText(
+      watch.url,
+      watch.selector,
+      watch.recipe_json,
+      { forceLocal: options.local }
+    );
 
-    console.log(`   ✓ Extracted visible text in ${browserMs}ms (${rawText.length} raw chars)`);
+    // If recipe steps were discovered or updated through fallback, persist to watch
+    if (updatedRecipe && updatedRecipe.length > 0) {
+      repo.updateWatchRecipe(watch.id, JSON.stringify(updatedRecipe));
+    }
+
+    log(`   ✓ Extracted visible text in ${browserMs}ms (${rawText.length} raw chars)`);
+    if (replayed) {
+      log(pc.green(`   ✓ Replayed actions deterministically (0 model calls)`));
+    }
+    if (recipeFallback) {
+      log(pc.yellow(`   ! Re-discovery fallback occurred and updated recipe`));
+    }
 
     // Normalize text & compute SHA-256 hash
-    console.log(pc.cyan(`2. Normalizing text and computing hash...`));
+    log(pc.cyan(`2. Normalizing text and computing hash...`));
     const normalized = normalizeText(rawText);
     const hash = computeHash(normalized);
-    console.log(`   ✓ Normalized to ${normalized.length} chars (Hash: ${hash.slice(0, 12)}...)`);
+    log(`   ✓ Normalized to ${normalized.length} chars (Hash: ${hash.slice(0, 12)}...)`);
 
     // Check last snapshot
     const lastSnapshot = repo.getLatestSnapshot(watch.id);
@@ -66,14 +95,30 @@ export async function handleRun(idStr: string, options: RunOptions = {}): Promis
         model_ms: 0,
         prompt_tokens: 0,
         completion_tokens: 0,
+        replayed: replayed ? 1 : 0,
+        recipe_fallback: recipeFallback ? 1 : 0,
         reason: "Content hash identical to previous snapshot. Model call skipped.",
       });
 
-      console.log(pc.green(pc.bold("\n✓ LAZY PAYOFF: Page content unchanged!")));
-      console.log(`   ${pc.bold("Model calls avoided:")} 1 (0 LLM tokens used)`);
-      console.log(`   ${pc.bold("Hash match:")}           ${hash.slice(0, 16)}...`);
-      console.log(`   ${pc.bold("Total duration:")}        ${totalDuration}ms (Browser: ${browserMs}ms, Model: 0ms)\n`);
-      return;
+      log(pc.green(pc.bold("\n✓ LAZY PAYOFF: Page content unchanged!")));
+      log(`   ${pc.bold("Model calls avoided:")} 1 (0 LLM tokens used)`);
+      log(`   ${pc.bold("Hash match:")}           ${hash.slice(0, 16)}...`);
+      log(`   ${pc.bold("Total duration:")}        ${totalDuration}ms (Browser: ${browserMs}ms, Model: 0ms)\n`);
+
+      return {
+        runId: run.id,
+        watchId: watch.id,
+        status: "unchanged",
+        changed: false,
+        matters: null,
+        modelCalled: false,
+        replayed,
+        recipeFallback,
+        durationMs: totalDuration,
+        browserMs,
+        modelMs: 0,
+        reason: "Content hash identical to previous snapshot.",
+      };
     }
 
     // Case 2: First run (Establish baseline)
@@ -93,26 +138,42 @@ export async function handleRun(idStr: string, options: RunOptions = {}): Promis
         model_called: 0,
         browser_ms: browserMs,
         model_ms: 0,
+        replayed: replayed ? 1 : 0,
+        recipe_fallback: recipeFallback ? 1 : 0,
         summary: "Baseline snapshot established",
         reason: "First run established initial snapshot. Subsequent runs will compare against this hash.",
       });
 
-      console.log(pc.green(pc.bold("\n✓ Initial baseline snapshot stored!")));
-      console.log(`   ${pc.bold("Snapshot ID:")}    #${snapshot.id}`);
-      console.log(`   ${pc.bold("Snapshot Hash:")}  ${hash.slice(0, 16)}...`);
-      console.log(`   ${pc.bold("Total duration:")} ${totalDuration}ms (Browser: ${browserMs}ms, Model: 0ms)\n`);
-      return;
+      log(pc.green(pc.bold("\n✓ Initial baseline snapshot stored!")));
+      log(`   ${pc.bold("Snapshot ID:")}    #${snapshot.id}`);
+      log(`   ${pc.bold("Snapshot Hash:")}  ${hash.slice(0, 16)}...`);
+      log(`   ${pc.bold("Total duration:")} ${totalDuration}ms (Browser: ${browserMs}ms, Model: 0ms)\n`);
+
+      return {
+        runId: run.id,
+        watchId: watch.id,
+        status: "success",
+        changed: true,
+        matters: null,
+        modelCalled: false,
+        replayed,
+        recipeFallback,
+        durationMs: totalDuration,
+        browserMs,
+        modelMs: 0,
+        summary: "Baseline snapshot established",
+      };
     }
 
     // Case 3: Content changed! Build compact diff and invoke local judge
-    console.log(pc.yellow(`\n3. Content changed! Building compact diff...`));
+    log(pc.yellow(`\n3. Content changed! Building compact diff...`));
     const diffResult = buildCompactDiff(lastSnapshot.text, normalized);
-    console.log(`   ✓ Diff: +${diffResult.addedLinesCount} lines, -${diffResult.removedLinesCount} lines`);
+    log(`   ✓ Diff: +${diffResult.addedLinesCount} lines, -${diffResult.removedLinesCount} lines`);
     if (diffResult.truncated) {
-      console.log(`   ! Diff was capped to fit small model context safely.`);
+      log(`   ! Diff was capped to fit small model context safely.`);
     }
 
-    console.log(pc.cyan(`\n4. Sending diff to local Gemma judge via Ollama...`));
+    log(pc.cyan(`\n4. Sending diff to local Gemma judge via Ollama...`));
     const judgeResult = await judgeDiff(watch.care, diffResult.diffText);
 
     if (!judgeResult.success) {
@@ -126,13 +187,30 @@ export async function handleRun(idStr: string, options: RunOptions = {}): Promis
         model_ms: judgeResult.modelMs,
         prompt_tokens: judgeResult.promptTokens,
         completion_tokens: judgeResult.completionTokens,
+        replayed: replayed ? 1 : 0,
+        recipe_fallback: recipeFallback ? 1 : 0,
         error: judgeResult.error || "Model output validation failed",
       });
 
-      console.error(pc.red(pc.bold(`\n✗ JUDGE FAILED: ${judgeResult.error}`)));
-      console.error(pc.dim("Run recorded as judge_failed in history. No push sent.\n"));
-      process.exitCode = 1;
-      return;
+      if (!options.silent) {
+        console.error(pc.red(pc.bold(`\n✗ JUDGE FAILED: ${judgeResult.error}`)));
+        console.error(pc.dim("Run recorded as judge_failed in history. No push sent.\n"));
+      }
+
+      return {
+        runId: run.id,
+        watchId: watch.id,
+        status: "judge_failed",
+        changed: true,
+        matters: null,
+        modelCalled: true,
+        replayed,
+        recipeFallback,
+        durationMs: totalDuration,
+        browserMs,
+        modelMs: judgeResult.modelMs,
+        error: judgeResult.error,
+      };
     }
 
     const judgment = judgeResult.judgment!;
@@ -156,20 +234,22 @@ export async function handleRun(idStr: string, options: RunOptions = {}): Promis
       model_ms: judgeResult.modelMs,
       prompt_tokens: judgeResult.promptTokens,
       completion_tokens: judgeResult.completionTokens,
+      replayed: replayed ? 1 : 0,
+      recipe_fallback: recipeFallback ? 1 : 0,
     });
 
-    console.log(pc.bold("\n🦥 Judgment Result from Local Gemma:"));
+    log(pc.bold("\n🦥 Judgment Result from Local Gemma:"));
     const mattersColor = judgment.matters ? pc.green(pc.bold("YES")) : pc.yellow(pc.bold("NO"));
-    console.log(`   ${pc.bold("Matters:")} ${mattersColor}`);
-    console.log(`   ${pc.bold("Summary:")} ${judgment.summary}`);
-    console.log(`   ${pc.bold("Reason:")}  ${judgment.reason}`);
-    console.log(
+    log(`   ${pc.bold("Matters:")} ${mattersColor}`);
+    log(`   ${pc.bold("Summary:")} ${judgment.summary}`);
+    log(`   ${pc.bold("Reason:")}  ${judgment.reason}`);
+    log(
       `   ${pc.dim("Model stats:")} ${judgeResult.modelMs}ms | ${judgeResult.promptTokens} prompt tokens | ${judgeResult.completionTokens} completion tokens`
     );
 
     // If change matters, push notification to phone
     if (judgment.matters) {
-      console.log(pc.cyan(`\n5. Dispatching push alert via ntfy...`));
+      log(pc.cyan(`\n5. Dispatching push alert via ntfy...`));
       const pushTitle = watch.name || `Watch #${watch.id}`;
       const pushResult = await sendPushNotification({
         title: pushTitle,
@@ -179,13 +259,29 @@ export async function handleRun(idStr: string, options: RunOptions = {}): Promis
       });
 
       if (pushResult.sent) {
-        console.log(pc.green(pc.bold(`✓ 📱 Push alert dispatched to phone! (Action: ${watch.url})\n`)));
+        log(pc.green(pc.bold(`✓ 📱 Push alert dispatched to phone! (Action: ${watch.url})\n`)));
       } else {
-        console.log(pc.yellow(`! Push dispatch failed: ${pushResult.error}\n`));
+        log(pc.yellow(`! Push dispatch failed: ${pushResult.error}\n`));
       }
     } else {
-      console.log(pc.blue(`\nℹ️ Change filtered out as noise/unrelated. No push alert sent.\n`));
+      log(pc.blue(`\nℹ️ Change filtered out as noise/unrelated. No push alert sent.\n`));
     }
+
+    return {
+      runId: run.id,
+      watchId: watch.id,
+      status: "success",
+      changed: true,
+      matters: judgment.matters,
+      modelCalled: true,
+      replayed,
+      recipeFallback,
+      durationMs: totalDuration,
+      browserMs,
+      modelMs: judgeResult.modelMs,
+      summary: judgment.summary,
+      reason: judgment.reason,
+    };
   } catch (err) {
     const totalDuration = Date.now() - startTime;
     const errorMessage = (err as Error).message || String(err);
@@ -196,7 +292,37 @@ export async function handleRun(idStr: string, options: RunOptions = {}): Promis
       error: errorMessage,
     });
 
-    console.error(pc.red(pc.bold(`\n✗ Run failed: ${errorMessage}\n`)));
+    if (!options.silent) {
+      console.error(pc.red(pc.bold(`\n✗ Run failed: ${errorMessage}\n`)));
+    }
+
+    return {
+      runId: run.id,
+      watchId: watch.id,
+      status: "error",
+      changed: false,
+      matters: null,
+      modelCalled: false,
+      replayed: false,
+      recipeFallback: false,
+      durationMs: totalDuration,
+      browserMs: 0,
+      modelMs: 0,
+      error: errorMessage,
+    };
+  }
+}
+
+export async function handleRun(idStr: string, options: RunOptions = {}): Promise<void> {
+  const id = parseInt(idStr, 10);
+  if (isNaN(id) || id <= 0) {
+    console.error(pc.red(`Error: "${idStr}" is not a valid watch ID.`));
+    process.exitCode = 1;
+    return;
+  }
+
+  const result = await executeWatchRun(id, options);
+  if (result.status === "error" || result.status === "judge_failed") {
     process.exitCode = 1;
   }
 }

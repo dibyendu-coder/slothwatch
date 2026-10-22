@@ -25,6 +25,14 @@ export function getDatabase(customPath?: string): Database.Database {
   const schemaSql = fs.readFileSync(schemaPath, "utf-8");
   db.exec(schemaSql);
 
+  // Safe migrations for newly added columns
+  try {
+    db.exec("ALTER TABLE runs ADD COLUMN replayed INTEGER NOT NULL DEFAULT 0");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE runs ADD COLUMN recipe_fallback INTEGER NOT NULL DEFAULT 0");
+  } catch {}
+
   if (!customPath) {
     dbInstance = db;
   }

@@ -23,7 +23,9 @@ CREATE TABLE IF NOT EXISTS runs (
   browser_ms INTEGER DEFAULT 0,
   model_ms INTEGER DEFAULT 0,
   prompt_tokens INTEGER DEFAULT 0,
-  completion_tokens INTEGER DEFAULT 0
+  completion_tokens INTEGER DEFAULT 0,
+  replayed INTEGER NOT NULL DEFAULT 0,
+  recipe_fallback INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS snapshots (

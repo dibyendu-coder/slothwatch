@@ -1,13 +1,18 @@
+import { executeRecipe, type RecipeStep } from "./recipe.js";
 import { createBrowserSession, type LaunchOptions } from "./session.js";
 
 export interface ExtractResult {
   rawText: string;
   browserMs: number;
+  replayed: boolean;
+  recipeFallback: boolean;
+  updatedRecipe?: RecipeStep[];
 }
 
 export async function extractPageText(
   url: string,
   selector?: string | null,
+  recipeJson?: string | null,
   options: LaunchOptions = {}
 ): Promise<ExtractResult> {
   const startTime = Date.now();
@@ -21,6 +26,20 @@ export async function extractPageText(
 
     // Wait for the DOM to settle
     await session.page.waitForLoadState("domcontentloaded");
+
+    // Execute recipe steps if configured (cookie banners, tabs, clicks)
+    let replayed = false;
+    let recipeFallback = false;
+    let updatedRecipe: RecipeStep[] | undefined;
+
+    if (recipeJson) {
+      const recipeRes = await executeRecipe(session, recipeJson);
+      replayed = recipeRes.replayed;
+      recipeFallback = recipeRes.fallback;
+      if (recipeRes.steps.length > 0) {
+        updatedRecipe = recipeRes.steps;
+      }
+    }
 
     let rawText = "";
     if (selector) {
@@ -43,6 +62,9 @@ export async function extractPageText(
     return {
       rawText,
       browserMs,
+      replayed,
+      recipeFallback,
+      updatedRecipe,
     };
   } finally {
     await session.close();

@@ -5,6 +5,9 @@ import { handleHistory } from "./history.js";
 import { handleList } from "./list.js";
 import { handleRemove } from "./remove.js";
 import { handleRun } from "./run.js";
+import { handleRunAll } from "./run-all.js";
+import { handleScheduleHelp } from "./schedule-help.js";
+import { handleStats } from "./stats.js";
 
 export function createProgram(): Command {
   const program = new Command("slothwatch");
@@ -30,6 +33,12 @@ export function createProgram(): Command {
     .requiredOption("-c, --care <description>", "What change to watch for (plain English)")
     .option("-s, --selector <css>", "Optional CSS selector to narrow down the target area")
     .option("-n, --name <label>", "Optional human-readable label for this watch")
+    .option(
+      "--step <instruction>",
+      "Pre-extraction recipe step in plain English (e.g. 'click Accept', 'wait 2s'). Can be repeated.",
+      (val: string, prev: string[]) => prev.concat([val]),
+      []
+    )
     .action((url, options) => {
       handleAdd(url, options);
     });
@@ -57,10 +66,36 @@ export function createProgram(): Command {
     });
 
   program
+    .command("run-all")
+    .description("Execute runs for every configured watch, respecting minimum run intervals")
+    .option("-i, --interval <minutes>", "Minimum interval between runs in minutes (default: 60)", "60")
+    .option("-f, --force", "Bypass minimum interval rule and run all watches immediately")
+    .option("-l, --local", "Force using local Chrome browser instead of Browserbase cloud")
+    .action(async (options) => {
+      await handleRunAll(options);
+    });
+
+  program
+    .command("stats")
+    .description("Display Lazy Payoff efficiency report: model calls avoided, timing, and manual time saved")
+    .option("-m, --manual-mins <minutes>", "Estimated manual minutes saved per check (default: 2)", "2")
+    .action((options) => {
+      handleStats(options);
+    });
+
+  program
     .command("history <id>")
     .description("Display run and judgment history for a watch")
-    .action((id) => {
-      handleHistory(id);
+    .option("-n, --limit <count>", "Number of recent runs to display (default: 10)", "10")
+    .action((id, options) => {
+      handleHistory(id, options);
+    });
+
+  program
+    .command("schedule-help")
+    .description("Display copy-paste scheduling commands for your operating system")
+    .action(() => {
+      handleScheduleHelp();
     });
 
   return program;
