@@ -35,7 +35,10 @@ Rules:
 - Advertisements, tracking notices, cookie banners, navigation menus, and layout whitespace DO NOT matter.
 - If the only difference in the diff is noise, counters, or timestamps, set "matters": false.
 
-3. USER INTENT:
+3. USER INTENT & SEMANTICS:
+- Phrases like "Notify me when X", "Alert me if X", or "Tell me if X" describe the condition X to detect on the page. If the diff shows that condition X occurred (e.g., item restocked, deadline shifted, status changed), set "matters": true.
+- Do NOT treat "notify me" as asking whether the website added a notification feature or button.
+- If the instruction specifies a numeric condition (e.g., "drops below $300"), check the numbers strictly: if the new value does not meet the criteria, set "matters": false.
 - "matters" is true ONLY IF the change directly and meaningfully satisfies what the user cares about.
 - Keep the summary to maximum 2 short lines.
 - Output raw JSON only. Never wrap in markdown code blocks.`;

@@ -34,10 +34,10 @@ Mark each box when done. Do one phase at a time and stop for review at the end o
 - [x] `history`
 
 ## Phase 4 — Benchmark and polish
-- [ ] Same watch list judged by 2-3 open models, table of success, time, tokens
-- [ ] Three real demo chores
-- [ ] Failure-case log: where small Gemma failed and what the design change was (for the honest section of the post)
-- [ ] README final, install under 10 minutes
+- [x] Same watch list judged by 2-3 open models, table of success, time, tokens
+- [x] Three real demo chores
+- [x] Failure-case log: where small Gemma failed and what the design change was (for the honest section of the post)
+- [x] README final, install under 10 minutes
 
 ## Phase 5 — Ship
 - [ ] Tiny landing page on .tech domain (claim at hacktoberfest.com/my/promos), links to repo and post

@@ -50,10 +50,13 @@ export async function runDoctor(): Promise<boolean> {
         },
       });
       if (res.ok) {
+        const maskedProjectId = config.BROWSERBASE_PROJECT_ID
+          ? maskSecret(config.BROWSERBASE_PROJECT_ID)
+          : "default";
         results.push({
           title: "Browserbase Authentication",
           ok: true,
-          message: `Authenticated successfully (Project ID: ${config.BROWSERBASE_PROJECT_ID || "default"})`,
+          message: `Authenticated successfully (Project ID: ${maskedProjectId})`,
           critical: true,
         });
       } else {
@@ -141,7 +144,7 @@ export async function runDoctor(): Promise<boolean> {
         results.push({
           title: "ntfy Configuration",
           ok: true,
-          message: `Server healthy (${config.NTFY_SERVER}) and topic configured ("${config.NTFY_TOPIC}")`,
+          message: `Server healthy (${config.NTFY_SERVER}) and topic configured ("${maskSecret(config.NTFY_TOPIC)}")`,
           critical: true,
         });
       } else {
@@ -182,4 +185,12 @@ export async function runDoctor(): Promise<boolean> {
   console.log("");
 
   return allCriticalOk;
+}
+
+function maskSecret(val?: string): string {
+  if (!val) return "";
+  if (val.length <= 6) return "****";
+  const start = val.slice(0, 3);
+  const end = val.slice(-3);
+  return `${start}…${end}`;
 }

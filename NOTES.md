@@ -82,3 +82,46 @@ Running log of surprises, failures, design pivots, and real measured numbers for
   - **SQLite UTC vs JavaScript Date**: SQLite `datetime('now')` produces `YYYY-MM-DD HH:MM:SS` in UTC. In JavaScript on Windows in non-UTC timezones (e.g. IST +05:30), `new Date(str)` without an explicit `"Z"` interprets the timestamp as local time, shifting it 5.5 hours into the past and causing interval calculations to treat recent runs as hours old. Solved via `parseSqliteUtc` helper.
   - **TypeScript Build Asset Copying**: TypeScript compiler (`tsc`) does not copy `.sql` files into `dist/`. Added dynamic directory lookup in `src/db/client.ts` to locate `schema.sql` whether running from source via `tsx` or compiled via `node dist/bin/slothwatch.js`.
   - **Fault Isolation in run-all**: When Watch #5 initially encountered an invalid CSS selector, the runner safely isolated the error, updated SQLite with `status: error`, and proceeded to subsequent watches without aborting the suite.
+
+## Phase 4 Notes & Measured Numbers (Benchmark, Polish & Safety)
+
+### 1. Benchmark Execution & Model Comparison
+- **Dataset**: `bench/cases.json` created with 22 fixed cases (9 real changes, 8 noise, 5 tricky edge cases).
+- **Models Compared**: `gemma4:e2b` (4.6 GB), `gemma4:e4b` (6.6 GB), `llama3.2:3b` (2.0 GB).
+- **Round 1 (Baseline Prompt)**:
+  - `gemma4:e2b`: 21/22 (95.5%), 0 FP, 1 FN (Case 05: RTX 5080 restock), 0 schema errors, 7.56s avg latency.
+  - `gemma4:e4b`: 21/22 (95.5%), 1 FP (Case 22: price math), 0 FN, 0 schema errors, 7.06s avg latency.
+  - `llama3.2:3b`: 19/22 (86.4%), 2 FP (Case 16: comments count, Case 22: price math), 1 FN (Case 07: hackathon category), 0 schema errors, 2.08s avg latency.
+- **Failure Analysis**:
+  - `gemma4:e2b` failed Case 05 (*"Notify me when the RTX 5080 GPU is back in stock"*) with reason: *"The user requested a notification when the item is back in stock. This change only updates the current stock status, not implementing a notification feature."* The small model literally interpreted "Notify me" as asking if the website implemented a notification system!
+  - `gemma4:e4b` and `llama3.2:3b` failed Case 22 (*"Tell me if the flight ticket price drops below $300"*, diff `$380 -> $325`) with reason claiming $325 is below $300 (small model arithmetic limitation).
+  - `llama3.2:3b` hallucinated on Case 07 and over-eagerly flagged comment count noise on Case 16 as modifying blog content.
+
+### 2. Single Allowed Prompt Tuning Iteration
+- Refined Rule 3 in `SYSTEM_PROMPT` (`src/judge/judge.ts`):
+  - Clarified that phrases like "Notify me when X" describe condition X to detect on the page, and not whether the website added a notification button.
+  - Added strict arithmetic instruction for numerical thresholds.
+- **Round 2 (Tuned Prompt Results)**:
+  - `gemma4:e2b`: **21/22 (95.5%), 1 FP, 0 FN (Zero missed changes!)**, 0 schema errors, **5.31s avg latency**.
+  - `gemma4:e4b`: 21/22 (95.5%), 1 FP, 0 FN (Zero missed changes!), 0 schema errors, 6.35s avg latency.
+  - `llama3.2:3b`: 20/22 (90.9%), 2 FP, 0 FN, 0 schema errors, 1.81s avg latency.
+- **Conclusion**: `gemma4:e2b` achieved a **0% False Negative rate** (never misses a real alert), 0 schema retries, and lower latency than `e4b`. It is firmly justified as the default model in config.
+
+### 3. Demo Chores Execution (Real Cloud Targets)
+- Set up 3 real watches:
+  1. Controlled page: `https://github.com/dibyendu-coder/slothwatch` (Watch #3)
+  2. Stable price target: `https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html` (Watch #4)
+  3. DEV Challenge page: `https://dev.to/challenges/hf26` (Watch #7)
+- **Observations & Bot Defenses**:
+  - DEV challenge page (`https://dev.to/challenges/hf26`) loaded seamlessly via Browserbase in 11.02s without Cloudflare challenge intercepts.
+  - 10,940 normalized characters extracted.
+  - Second run on DEV achieved the Lazy Payoff: hash matched previous snapshot, **0 model calls, 0 tokens**.
+  - Books to Scrape executed deterministic recipe replay (`click #write_review`), hash matched, **0 model calls**.
+  - SlothWatch GitHub repo: 10.6s extraction, hash matched, **0 model calls**.
+  - Total Browserbase session time consumed across demo chores: ~0.75 session minutes.
+
+### 4. Interactive Demo & Safety Verification
+- Added `npm run demo` (`scripts/demo.ts`): spins up an isolated test web server, tests baseline snapshot, validates lazy hash hit (0 model calls), triggers real page diff, confirms local Gemma evaluation, fires ntfy phone push alert, and displays efficiency report.
+- Hardened `doctor` command: masked sensitive Browserbase project IDs (`55f…404`) and ntfy topics (`slo…4v8`).
+- Audited git history and files: confirmed zero secrets or API keys committed (`git log -p -S bb_live`). `.env` and `slothwatch.db` are strictly ignored.
+

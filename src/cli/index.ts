@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { handleAdd } from "./add.js";
+import { handleBench } from "./bench.js";
 import { runDoctor } from "./doctor.js";
 import { handleHistory } from "./history.js";
 import { handleList } from "./list.js";
@@ -96,6 +97,19 @@ export function createProgram(): Command {
     .description("Display copy-paste scheduling commands for your operating system")
     .action(() => {
       handleScheduleHelp();
+    });
+
+  program
+    .command("bench")
+    .description("Benchmark open-weight models against a fixed suite of real and noise diffs")
+    .option(
+      "-m, --models <tags>",
+      "Comma-separated list of Ollama model tags (default: gemma4:e2b,gemma4:e4b,llama3.2:3b)",
+      "gemma4:e2b,gemma4:e4b,llama3.2:3b"
+    )
+    .option("-c, --cases <path>", "Path to cases JSON file (default: bench/cases.json)")
+    .action(async (options) => {
+      await handleBench(options);
     });
 
   return program;

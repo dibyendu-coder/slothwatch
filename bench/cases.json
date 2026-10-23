@@ -1,0 +1,178 @@
+[
+  {
+    "id": "case-01",
+    "category": "real_change",
+    "care": "Tell me if my job application status changes",
+    "diff": "- Application Status: Review in Progress\n+ Application Status: Interview Scheduled for Oct 28",
+    "expected": true,
+    "note": "Status progression from review to interview scheduled"
+  },
+  {
+    "id": "case-02",
+    "category": "real_change",
+    "care": "Notify me if the hackathon submission deadline is extended",
+    "diff": "- Submission Deadline: October 20, 2026 at 11:59 PM\n+ Submission Deadline: November 05, 2026 at 11:59 PM",
+    "expected": true,
+    "note": "Deadline extended by two weeks"
+  },
+  {
+    "id": "case-03",
+    "category": "real_change",
+    "care": "Alert me if the mechanical keyboard price drops",
+    "diff": "- Price: $129.99\n+ Price: $89.99 (Special Fall Sale - 30% Off)",
+    "expected": true,
+    "note": "Significant price reduction"
+  },
+  {
+    "id": "case-04",
+    "category": "real_change",
+    "care": "Tell me when the concert tickets go on sale",
+    "diff": "- Tickets: Coming Soon (Sales closed)\n+ Tickets: General Admission On Sale Now - $45",
+    "expected": true,
+    "note": "Ticket release transition from closed to live"
+  },
+  {
+    "id": "case-05",
+    "category": "real_change",
+    "care": "Notify me when the RTX 5080 GPU is back in stock",
+    "diff": "- Status: Currently Out of Stock\n+ Status: In Stock (Only 4 remaining, order soon)",
+    "expected": true,
+    "note": "Product restocked"
+  },
+  {
+    "id": "case-06",
+    "category": "real_change",
+    "care": "Alert me if a new Python release is published",
+    "diff": "- Latest Stable Release: Python 3.14.0rc2\n+ Latest Stable Release: Python 3.14.0 Final",
+    "expected": true,
+    "note": "New official software version release"
+  },
+  {
+    "id": "case-07",
+    "category": "real_change",
+    "care": "Tell me if the partner challenge announces new prize categories",
+    "diff": "- Challenge Categories: General Track, Overall Winner\n+ Challenge Categories: General Track, Overall Winner, Best Use of Browserbase, Best Use of Gemma",
+    "expected": true,
+    "note": "New competition categories added"
+  },
+  {
+    "id": "case-08",
+    "category": "real_change",
+    "care": "Notify me if my flight status changes or gets delayed",
+    "diff": "- Flight DL 184: On Time (Departure 14:15)\n+ Flight DL 184: Delayed to 16:45 (Maintenance Check)",
+    "expected": true,
+    "note": "Flight delayed by 2.5 hours"
+  },
+  {
+    "id": "case-09",
+    "category": "real_change",
+    "care": "Tell me when semester final exam grades are posted",
+    "diff": "- CS401 Advanced Systems: Grade Pending\n+ CS401 Advanced Systems: Grade A (Published Oct 23)",
+    "expected": true,
+    "note": "Academic grades published"
+  },
+  {
+    "id": "case-10",
+    "category": "noise",
+    "care": "Notify me if the production server goes down",
+    "diff": "- Last health check: 2026-10-23 14:15:00 UTC\n+ Last health check: 2026-10-23 14:20:00 UTC",
+    "expected": false,
+    "note": "Routine health check timestamp refresh"
+  },
+  {
+    "id": "case-11",
+    "category": "noise",
+    "care": "Tell me if the product price changes",
+    "diff": "- Page views: 14,208 (32 viewing now)\n+ Page views: 14,351 (41 viewing now)",
+    "expected": false,
+    "note": "Live visitor counter fluctuation"
+  },
+  {
+    "id": "case-12",
+    "category": "noise",
+    "care": "Alert me if new articles are published on the engineering blog",
+    "diff": "- Sponsor: Try FastCloud VPS for $5/mo\n+ Sponsor: Hire elite developers globally with AcmeTalent",
+    "expected": false,
+    "note": "Rotating third-party sidebar ad"
+  },
+  {
+    "id": "case-13",
+    "category": "noise",
+    "care": "Tell me if the conference schedule or speakers change",
+    "diff": "- We use cookies to enhance user experience.\n+ We use cookies and local storage in accordance with EU GDPR Policy 2026. Accept or Manage Preferences.",
+    "expected": false,
+    "note": "Cookie consent banner disclaimer update"
+  },
+  {
+    "id": "case-14",
+    "category": "noise",
+    "care": "Notify me if any API endpoints are deprecated",
+    "diff": "- Documentation for REST API v2\n+ Documentation for REST   API v2",
+    "expected": false,
+    "note": "Minor whitespace and layout indentation change"
+  },
+  {
+    "id": "case-15",
+    "category": "noise",
+    "care": "Alert me if the service subscription pricing changes",
+    "diff": "- © 2025 CloudCorp Inc. Git commit: 4f1a28\n+ © 2026 CloudCorp Inc. Git commit: 8b3c99",
+    "expected": false,
+    "note": "Footer copyright year and build hash rollover"
+  },
+  {
+    "id": "case-16",
+    "category": "noise",
+    "care": "Tell me if the blog post content is edited or corrected",
+    "diff": "- Comments (42)\n+ Comments (43)",
+    "expected": false,
+    "note": "Public comment counter increment"
+  },
+  {
+    "id": "case-17",
+    "category": "noise",
+    "care": "Notify me if the job opening is closed or filled",
+    "diff": "- 12 people viewed this posting today\n+ 19 people viewed this posting today",
+    "expected": false,
+    "note": "Social engagement view counter update"
+  },
+  {
+    "id": "case-18",
+    "category": "tricky",
+    "care": "Alert me when the limited edition sloth plushie is back in stock",
+    "diff": "  Product: Limited Edition Sloth Plushie\n  Material: Organic Cotton\n  Dimensions: 14in x 9in\n- Availability: Sold Out\n+ Availability: In Stock\n  Weight: 450g\n  Shipping: Free worldwide shipping",
+    "expected": true,
+    "note": "Tricky: single line toggle (Sold Out -> In Stock) embedded in unchanged product specs"
+  },
+  {
+    "id": "case-19",
+    "category": "tricky",
+    "care": "Tell me if the challenge submission deadline changes",
+    "diff": "  Challenge: DEV Hacktoberfest 2026\n  Theme: Slow and Steady Open Source AI\n- Deadline: Oct 24, 2026 at 11:59 PM PDT\n+ Deadline: Oct 25, 2026 at 11:59 PM PDT\n  Eligibility: Open to all registered developers",
+    "expected": true,
+    "note": "Tricky: single digit change (24 -> 25) in deadline timestamp amidst unchanged rules"
+  },
+  {
+    "id": "case-20",
+    "category": "tricky",
+    "care": "Notify me if the annual subscription price changes",
+    "diff": "- Welcome to our Autumn 2026 catalog!\n- Featuring 200+ interactive courses and project labs.\n- Connect with senior mentors across the globe.\n+ Welcome to our Winter 2026 mega release!\n+ Featuring new AI-assisted code walkthroughs and Rust paths.\n+ Join our community Discord of 60,000 engineers.\n+ Practice system design with real-world architectural challenges.\n  Annual Pro Plan: $199/year",
+    "expected": false,
+    "note": "Tricky: massive 7-line marketing text overhaul, but watched price ($199/year) remains unchanged"
+  },
+  {
+    "id": "case-21",
+    "category": "tricky",
+    "care": "Notify me if the payment gateway API has any outage or maintenance",
+    "diff": "  Service: Stripe Payments Gateway API\n  Status: Operational (100% uptime over past 30 days)\n+ Legal Update: Section 4.2 has been amended regarding EU Data Processing.\n+ Clause 4.2.1: Data residency guarantees for EEA accounts.\n+ Clause 4.2.2: Standard Contractual Clauses updated for 2026 compliance.\n+ Clause 4.2.3: Sub-processor notices distributed via security mailing list.",
+    "expected": false,
+    "note": "Tricky: large 4-line legal/GDPR policy addition on a status page, but service status remains Operational"
+  },
+  {
+    "id": "case-22",
+    "category": "tricky",
+    "care": "Tell me if the flight ticket price drops below $300",
+    "diff": "- Flight SEA -> SFO Economy: $380\n+ Flight SEA -> SFO Economy: $325",
+    "expected": false,
+    "note": "Tricky: price dropped from $380 to $325, but condition was explicitly 'below $300'"
+  }
+]

@@ -12,7 +12,8 @@
     "start": "node dist/bin/slothwatch.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "doctor": "tsx bin/slothwatch.ts doctor"
+    "doctor": "tsx bin/slothwatch.ts doctor",
+    "demo": "tsx scripts/demo.ts"
   },
   "dependencies": {
     "@browserbasehq/stagehand": "^4.3.0",
