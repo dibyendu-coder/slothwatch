@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SlothWatch — Lazy Web-Chore Watcher</title>
+  <meta name="description" content="A lazy web-chore watcher powered by cloud browsers and local open-weight AI. Only buzzes your phone when a web change genuinely matters.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container nav-container">
+      <div class="brand">
+        <span class="brand-icon" aria-hidden="true">🦥</span>
+        <span class="brand-name">SlothWatch</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#how-it-works">How It Works</a>
+        <a href="#lazy-payoff">Lazy Payoff</a>
+        <a href="#benchmark">Benchmark</a>
+        <a href="#limitations">Limitations</a>
+        <a href="https://github.com/dibyendu-coder/slothwatch" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">
+          GitHub Repo
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO SECTION -->
+    <section class="hero">
+      <div class="container hero-container">
+        <div class="badge">
+          <span class="badge-dot"></span> Built for DEV Open-Source AI Challenge (Week 3: Slow and Steady)
+        </div>
+        <h1 class="hero-title">
+          A lazy web-chore watcher powered by cloud browsers and local open-weight AI.
+        </h1>
+        <p class="hero-lead">
+          Describe in plain English what you care about. A cloud browser visits on schedule. 
+          If the page hasn’t changed, SlothWatch does nothing. When it does, local Gemma decides 
+          if it actually matters—buzzing your phone via ntfy only when it's real.
+        </p>
+
+        <div class="install-card">
+          <div class="install-header">
+            <span>Quick Install &amp; Run</span>
+            <span class="code-badge">Node.js 20+</span>
+          </div>
+          <pre><code><span class="cmd-comment"># 1. Clone &amp; install</span>
+git clone https://github.com/dibyendu-coder/slothwatch.git
+cd slothwatch &amp;&amp; npm install &amp;&amp; npm run build
+cp .env.example .env
+
+<span class="cmd-comment"># 2. Check local setup &amp; credentials</span>
+npm run doctor
+
+<span class="cmd-comment"># 3. Add a watch</span>
+node dist/bin/slothwatch.js add "https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html" \
+  --name "Book Price" --care "Notify if price drops below 50 pounds"</code></pre>
+        </div>
+
+        <div class="hero-actions">
+          <a href="https://github.com/dibyendu-coder/slothwatch" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
+            View Source on GitHub
+          </a>
+          <a href="#how-it-works" class="btn btn-tertiary">
+            Explore Architecture ↓
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 STEPS SECTION -->
+    <section id="how-it-works" class="section section-alt">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">How It Works in 4 Steps</h2>
+          <p class="section-subtitle">
+            Split architecture: deterministic navigation in the cloud, intelligent reasoning strictly on your machine.
+          </p>
+        </div>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-number">01</div>
+            <h3 class="step-title">Deterministic Navigation</h3>
+            <p class="step-desc">
+              Browserbase cloud instances run headless Chromium via Stagehand to load target pages, handle complex JavaScript, and replay recorded click actions with <strong>0 LLM calls</strong>.
+            </p>
+            <div class="step-tag">Cloud Browser (Browserbase)</div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">02</div>
+            <h3 class="step-title">Lazy Hash Guard</h3>
+            <p class="step-desc">
+              Visible text is normalized and hashed with SHA-256 against the stored SQLite baseline. If the hash matches, SlothWatch exits immediately—consuming <strong>0 tokens and 0 model time</strong>.
+            </p>
+            <div class="step-tag">Lazy First (SHA-256)</div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">03</div>
+            <h3 class="step-title">Compact Diff Engine</h3>
+            <p class="step-desc">
+              When content shifts, a unified line diff strips away thousands of unchanged boilerplate lines, isolating only the genuine textual additions and deletions for context efficiency.
+            </p>
+            <div class="step-tag">Token Saver</div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">04</div>
+            <h3 class="step-title">Local Gemma Reasoning</h3>
+            <p class="step-desc">
+              A local open-weight model (<code>gemma4:e2b</code> via Ollama) evaluates the diff against your plain-English instructions. Timestamps and noise are suppressed; real changes push to ntfy.
+            </p>
+            <div class="step-tag">Local AI (Ollama + ntfy)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LAZY PAYOFF SECTION -->
+    <section id="lazy-payoff" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">The Lazy Payoff: Measured Real Numbers</h2>
+          <p class="section-subtitle">
+            No synthetic projections. These figures are recorded directly in SQLite and verified by <code>slothwatch stats</code>.
+          </p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value">57.1%</div>
+            <div class="stat-label">Model Calls Avoided</div>
+            <div class="stat-detail">8 of 14 runs exited at hash check with zero model invocation</div>
+          </div>
+
+          <div class="stat-box">
+            <div class="stat-value">2</div>
+            <div class="stat-label">Model Calls Made</div>
+            <div class="stat-detail">Only invoked when visible content actually differed</div>
+          </div>
+
+          <div class="stat-box">
+            <div class="stat-value">1,646</div>
+            <div class="stat-label">Total Local Tokens</div>
+            <div class="stat-detail">All inferred locally via Ollama; $0.00 cloud API cost</div>
+          </div>
+
+          <div class="stat-box">
+            <div class="stat-value">28 min</div>
+            <div class="stat-label">Manual Time Saved</div>
+            <div class="stat-detail">Estimated assuming 2 minutes per manual web check</div>
+          </div>
+        </div>
+
+        <div class="metrics-card">
+          <h3 class="metrics-title">Live Watch Breakdown</h3>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Target</th>
+                  <th>Runs</th>
+                  <th>Avoided</th>
+                  <th>Tokens</th>
+                  <th>Avg Browser</th>
+                  <th>Execution Pattern</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>SlothWatch GitHub Repo</strong></td>
+                  <td>4</td>
+                  <td>1</td>
+                  <td>1,646</td>
+                  <td>12.6s</td>
+                  <td>Initial diff evaluated ➔ Subsequent lazy hits</td>
+                </tr>
+                <tr>
+                  <td><strong>Book Price Watch</strong></td>
+                  <td>5</td>
+                  <td>4</td>
+                  <td>0</td>
+                  <td>18.7s</td>
+                  <td>Deterministic recipe replay (20.1s vs 30.8s 1st run)</td>
+                </tr>
+                <tr>
+                  <td><strong>Python Announcements</strong></td>
+                  <td>3</td>
+                  <td>2</td>
+                  <td>0</td>
+                  <td>11.3s</td>
+                  <td>Fast extraction &amp; hash check (15.1s 1st run)</td>
+                </tr>
+                <tr>
+                  <td><strong>DEV Hacktoberfest Challenge</strong></td>
+                  <td>2</td>
+                  <td>1</td>
+                  <td>0</td>
+                  <td>10.6s</td>
+                  <td>Bypasses bot defenses ➔ Unchanged hash hit</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BENCHMARK SECTION -->
+    <section id="benchmark" class="section section-alt">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Open-Weight Benchmark Results</h2>
+          <p class="section-subtitle">
+            Evaluated on 22 fixed test cases in <code>bench/cases.json</code> (real web changes, timestamp noise, and tricky edge cases).
+          </p>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table benchmark-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Accuracy</th>
+                <th>Score</th>
+                <th>False Positives (Noise)</th>
+                <th>False Negatives (Missed)</th>
+                <th>Schema Retries</th>
+                <th>Avg Latency</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="highlight-row">
+                <td><strong>gemma4:e2b (Default)</strong></td>
+                <td><span class="badge-pill pill-success">95.5%</span></td>
+                <td>21 / 22</td>
+                <td>1</td>
+                <td><strong>0</strong></td>
+                <td>0 / 0</td>
+                <td>5.31s</td>
+              </tr>
+              <tr>
+                <td><strong>gemma4:e4b</strong></td>
+                <td><span class="badge-pill pill-neutral">95.5%</span></td>
+                <td>21 / 22</td>
+                <td>1</td>
+                <td><strong>0</strong></td>
+                <td>0 / 0</td>
+                <td>6.35s</td>
+              </tr>
+              <tr>
+                <td><strong>llama3.2:3b</strong></td>
+                <td><span class="badge-pill pill-neutral">90.9%</span></td>
+                <td>20 / 22</td>
+                <td>2</td>
+                <td><strong>0</strong></td>
+                <td>0 / 0</td>
+                <td>1.81s</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout-box">
+          <div class="callout-title">Why <code>gemma4:e2b</code> is the Default</div>
+          <p>
+            It delivered a <strong>0% False Negative rate</strong>—it never missed a real change the user cared about. 
+            It strictly adhered to the JSON schema on the first attempt (0 retries), and clocked in at 5.31s average latency 
+            on local CPU/GPU with only 4.6 GB memory required.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- HONEST LIMITATIONS SECTION -->
+    <section id="limitations" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Honest Limitations</h2>
+          <p class="section-subtitle">
+            What SlothWatch does not do and known edges encountered during development.
+          </p>
+        </div>
+
+        <div class="limitations-grid">
+          <div class="limitation-item">
+            <div class="limitation-num">01</div>
+            <div>
+              <h4 class="limitation-title">Cold Model Inference Latency</h4>
+              <p class="limitation-text">
+                When Ollama first reads quantized model weights from local disk into RAM, the initial inference takes ~30–60 seconds. Subsequent warm evaluations drop to 2–6 seconds.
+              </p>
+            </div>
+          </div>
+
+          <div class="limitation-item">
+            <div class="limitation-num">02</div>
+            <div>
+              <h4 class="limitation-title">Client-Side Hydration Delays</h4>
+              <p class="limitation-text">
+                Heavy single-page applications (SPAs) rendering dynamic tables via client-side fetch may require a CSS selector target or brief sleep step to ensure complete text extraction.
+              </p>
+            </div>
+          </div>
+
+          <div class="limitation-item">
+            <div class="limitation-num">03</div>
+            <div>
+              <h4 class="limitation-title">Aggressive Bot Verification</h4>
+              <p class="limitation-text">
+                While Browserbase cloud browsers bypass most fingerprinting defenses, aggressive CAPTCHAs (like Cloudflare Turnstile interactive checks) can occasionally require manual cookies.
+              </p>
+            </div>
+          </div>
+
+          <div class="limitation-item">
+            <div class="limitation-num">04</div>
+            <div>
+              <h4 class="limitation-title">Small Model Arithmetic Limits</h4>
+              <p class="limitation-text">
+                As verified in benchmark Case 22, 2B parameter models can fail arithmetic comparisons (e.g. judging whether $325 is below $300). Care prompts should specify relative shifts ("if price drops") rather than fine math.
+              </p>
+            </div>
+          </div>
+
+          <div class="limitation-item">
+            <div class="limitation-num">05</div>
+            <div>
+              <h4 class="limitation-title">Strictly Read-Only Watching</h4>
+              <p class="limitation-text">
+                SlothWatch deliberately does not submit forms, enter passwords, or make payments. It is an autonomous observer, not an automated web actor.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-container">
+      <div class="footer-left">
+        <span class="footer-brand">🦥 SlothWatch</span>
+        <span class="footer-text">Built during Hacktoberfest Open-Source AI Challenge Week 3 (Oct 19–25, 2026).</span>
+      </div>
+      <div class="footer-right">
+        <a href="https://github.com/dibyendu-coder/slothwatch" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://browserbase.com" target="_blank" rel="noopener noreferrer">Browserbase</a>
+        <a href="https://ollama.com" target="_blank" rel="noopener noreferrer">Ollama</a>
+        <a href="https://ntfy.sh" target="_blank" rel="noopener noreferrer">ntfy</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
