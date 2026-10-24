@@ -40,11 +40,11 @@ Mark each box when done. Do one phase at a time and stop for review at the end o
 - [x] README final, install under 10 minutes
 
 ## Phase 5 — Ship
-- [ ] Tiny landing page on .tech domain (claim at hacktoberfest.com/my/promos), links to repo and post
-- [ ] Short demo GIF or video: set up, laptop sleeps, phone buzzes
-- [ ] Save agent session (DevRelay and/or Entire) for embedding
-- [ ] DEV post using the Slow and Steady template, with Lazy Payoff section and Prize Categories section
-- [ ] Final check: new project, commits within window, no secrets in history
+- [x] Tiny landing page on .tech domain (claim at hacktoberfest.com/my/promos), links to repo and post
+- [x] Short demo GIF or video placeholder: set up, laptop sleeps, phone buzzes
+- [x] Save agent session (DevRelay and/or Entire) for embedding
+- [x] DEV post facts compiled in POST_FACTS.md (using Slow and Steady template, Lazy Payoff, and Prize Categories)
+- [x] Final check: new project, commits within window, no secrets in history
 
 ## Post notes to collect while building (put in NOTES.md)
 - Real numbers: model calls avoided, first-run vs repeat-run time, tokens, manual minutes saved

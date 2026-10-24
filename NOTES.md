@@ -125,3 +125,12 @@ Running log of surprises, failures, design pivots, and real measured numbers for
 - Hardened `doctor` command: masked sensitive Browserbase project IDs (`55f…404`) and ntfy topics (`slo…4v8`).
 - Audited git history and files: confirmed zero secrets or API keys committed (`git log -p -S bb_live`). `.env` and `slothwatch.db` are strictly ignored.
 
+## Phase 5 Notes & Shipping Verification
+- **Landing Page**: Built lightweight, restrained sloth-themed static website in `docs/index.html` and `docs/style.css` for GitHub Pages / custom domain. Displays real stats from SQLite (`14 runs, 8 avoided, 57.1% lazy hit rate, 28m saved`), benchmark table, 4-step architecture, honest limitations, and quick install snippet.
+- **Custom Domain**: Configured `docs/CNAME` with `slothwatch.tech`. Documented exact A-records (`185.199.108.153`, etc.) and CNAME rules for registrar setup.
+- **Secrets Audit**: Completed exhaustive scan across working tree and entire git history (`git log -p -S ...`, `git log --all --full-history`). Zero API keys, zero project IDs, zero secret topics, and zero `.env`/`.db` files ever committed.
+- **Fresh-Clone Test**: Cloned repo into a clean temporary directory. Ran `npm install`, `npm run build`, `cp .env.example .env`, and `npm test`. Discovered test environment leak in `tests/notify.test.ts` where `.env.example` placeholder topic caused test failure; patched test with `beforeEach`/`afterEach` isolation. Verified all 29 tests pass cleanly across 9 test files on fresh clone.
+- **License & Attributions**: Added MIT `LICENSE` with copyright (c) 2026 Dibyendu, explicitly attributing `@browserbasehq/stagehand`, `better-sqlite3`, `commander`, `zod`, `vitest`, `tsx`, and `picocolors`.
+- **Blog Post Facts**: Compiled comprehensive, source-linked bullet list of verified facts, measurements, model failures, and design decisions in `POST_FACTS.md`.
+
+
