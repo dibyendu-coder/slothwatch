@@ -3,9 +3,15 @@ import { sendPushNotification } from "../src/notify/ntfy.js";
 
 describe("sendPushNotification", () => {
   const originalFetch = globalThis.fetch;
+  const originalTopic = process.env.NTFY_TOPIC;
+
+  beforeEach(() => {
+    process.env.NTFY_TOPIC = "slothwatch-unit-test-topic";
+  });
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+    process.env.NTFY_TOPIC = originalTopic;
     vi.restoreAllMocks();
   });
 
